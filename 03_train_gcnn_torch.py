@@ -56,7 +56,7 @@ def pretrain(model, dataloader):
 
 def process(model, dataloader, top_k, optimizer=None):
     """
-    Pre-normalizes a model (i.e., PreNormLayer layers) over the given samples.
+    Executes a forward and backward pass of model over the dataset.
 
     Parameters
     ----------
@@ -67,7 +67,7 @@ def process(model, dataloader, top_k, optimizer=None):
     top_k : list
         list of `k` (int) to estimate for accuracy using these many candidates
     optimizer :  torch.optim
-        optimizer to use for SGD
+        optimizer to use for SGD. No gradient computation takes place if its None. 
 
     Return
     ------
