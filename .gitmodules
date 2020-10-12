@@ -1,0 +1,3 @@
+[submodule "learn2branch"]
+	path = learn2branch
+	url = https://github.com/pg2455/learn2branch.git
