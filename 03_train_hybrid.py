@@ -56,8 +56,29 @@ def pretrain(model, dataloader):
     return i
 
 def process(model, teacher, dataloader, top_k, optimizer=None):
-    assert not isinstance(teacher, None), "If distilation_loss is True, teacher should not be Nonetype."
+    """
+    Executes a forward and backward pass of model over the dataset.
 
+    Parameters
+    ----------
+    model : model.BaseModel
+        A base model, which may contain some model.PreNormLayer layers.
+    teacher : model.BaseModel
+        A pretrained model when args.e2e is False, and an expert model when it is True.
+    dataloader : torch.utils.data.DataLoader
+        Dataset to use for training the model.
+    top_k : list
+        list of `k` (int) to estimate for accuracy using these many candidates
+    optimizer :  torch.optim
+        optimizer to use for SGD. No gradient computation takes place if its None.
+
+    Return
+    ------
+    mean_loss : np.float
+        mean loss of model on data in dataloader
+    mean_kacc : np.array
+        computed accuracy for `top_k` candidates
+    """
     mean_loss = 0
     mean_kacc = np.zeros(len(top_k))
 
@@ -87,7 +108,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
             optimizer.zero_grad()
             logits = model(batched_states)  # eval mode
             logits = model.pad_output(logits, n_cands)  # apply padding now
-            if not isinstance(teacher, None):
+            if args.distilled:
                 loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
             else:
                 loss = _loss_fn(logits, best_cands, weights)
@@ -101,7 +122,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
             with torch.no_grad():
                 logits = model(batched_states)  # eval mode
                 logits = model.pad_output(logits, n_cands)  # apply padding now
-                if not isinstance(teacher, None):
+                if args.distilled:
                     loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
                 else:
                     loss = _loss_fn(logits, best_cands, weights)
