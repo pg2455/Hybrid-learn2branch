@@ -12,7 +12,7 @@ import gzip
 import torch
 
 import utilities
-from utilities import log, _log_wandb, _loss_fn, distillation
+from utilities import log, _loss_fn, distillation
 import wandb
 
 from utilities_hybrid_torch import HybridDataset as Dataset, load_batch
@@ -36,7 +36,7 @@ def pretrain(model, dataloader):
     while True:
         for batch in dataloader:
             root_g, node_g, node_attr = [map(lambda x:x if x is None else x.to(device) , y) for y in batch]
-            root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, _* = root_g
+            root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, *_ = root_g
             g_c, g_ei, g_ev, g_v, g_n_cs, g_n_vs, candss = node_g
             cand_features, n_cands, best_cands, cand_scores, weights = node_attr
 
