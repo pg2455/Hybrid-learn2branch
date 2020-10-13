@@ -28,6 +28,7 @@ def _get_root_state(filename):
     cand_scores : np.array
         strong branching scrores for `sample_cands`
     """
+    filename = filename.replace('tmp', '')
     with gzip.open(filename, 'rb') as f:
         sample_state, _, sample_cands, sample_action, cand_scores = pickle.load(f)['root_state']
     return sample_state, sample_cands, sample_action, cand_scores
