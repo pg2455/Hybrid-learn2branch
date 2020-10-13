@@ -335,11 +335,11 @@ if __name__ == "__main__":
             train_data = Dataset(epoch_train_files, args.data_path)
             train_data = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
                                     shuffle = False, num_workers = num_workers, collate_fn = load_batch)
-            train_loss, train_kacc = process(model, teacher, train_data, top_k, optimizer, args.distilled)
+            train_loss, train_kacc = process(model, teacher, train_data, top_k, optimizer)
             log(f"TRAIN LOSS: {train_loss:0.3f} " + "".join([f" acc@{k}: {acc:0.3f}" for k, acc in zip(top_k, train_kacc)]), logfile)
 
         # TEST
-        valid_loss, valid_kacc = process(model, teacher, valid_data, top_k, None, args.distilled)
+        valid_loss, valid_kacc = process(model, teacher, valid_data, top_k, None)
         log(f"VALID LOSS: {valid_loss:0.3f} " + "".join([f" acc@{k}: {acc:0.3f}" for k, acc in zip(top_k, valid_kacc)]), logfile)
 
         if valid_loss < best_loss:
@@ -359,5 +359,5 @@ if __name__ == "__main__":
         scheduler.step(valid_loss)
 
     model.restore_state(os.path.join(running_dir, 'best_params.pkl'))
-    valid_loss, valid_kacc = process(model, teacher, valid_data, top_k, None, args.distilled)
+    valid_loss, valid_kacc = process(model, teacher, valid_data, top_k, None)
     log(f"BEST VALID LOSS: {valid_loss:0.3f} " + "".join([f" acc@{k}: {acc:0.3f}" for k, acc in zip(top_k, valid_kacc)]), logfile)
