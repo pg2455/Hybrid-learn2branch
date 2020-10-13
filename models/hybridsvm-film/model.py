@@ -357,7 +357,40 @@ class Policy(BaseModel):
         return output
 
     def forward(self, inputs):
-        root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_feats = inputs
+        """
+        Implements forward pass of the model
+
+        Parameters
+        ----------
+        root_c : torch.tensor
+            constraint features at the root node
+        root_ei : torch.tensor
+            indices to represent constraint-variable edges of the root node
+        root_ev : torch.tensor
+            edge features of the root node
+        root_v : torch.tensor
+            variable features at the root node
+        root_n_cs : torch.tensor
+            number of constraints per sample
+        root_n_vs : torch.tensor
+            number of variables per sample
+        candss : torch.tensor
+            candidate variable (strong branching candidates) indices at the root node
+        cand_feats : torch.tensor
+            candidate variable (strong branching candidates) features at a local node
+        cand_root_feats : torch.tensor
+            candidate root variable features at the root node
+
+        Return
+        ------
+        root_var_feats : torch.tensor
+            variable features computed from root gcnn (only if applicable)
+        logits : torch.tensor
+            output logits at the current node
+        parameters : torch.tensor
+            film-parameters to compute these logits (only if applicable)
+        """
+        root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_feats, _ = inputs
 
         variable_features = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
         cand_root_feats = variable_features[candss]
@@ -369,4 +402,4 @@ class Policy(BaseModel):
         film_feats = self.activation(film_parameters[:,0] * cand_feats + film_parameters[:,1])
         output = torch.sum(film_parameters[:,2] * film_feats, axis=-1)
         output = torch.reshape(output, [1, -1])
-        return output
+        return F.normalize(variable_features, p=2, dim=1), output, film_parameters

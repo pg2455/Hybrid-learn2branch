@@ -175,11 +175,11 @@ def load_batch_gcnn_minimal(batch):
     Parameters
     ----------
     batch : tuple
-        a tuple of constraint features, edge indices, edge features, variable features and candidates at root
+        a tuple of constraint features, edge indices, edge features, variable features and candidates at the root
 
     Return
     ------
-    (list): a list of above features with their proper format to be used in training models. 
+    (list): a list of above features with their proper format to be used in training models.
     """
     c_features, e_indices, e_features, v_features, candss = batch
 

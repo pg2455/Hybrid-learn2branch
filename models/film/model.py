@@ -5,7 +5,6 @@ import torch.nn.functional as F
 class PreNormException(Exception):
     pass
 
-
 class PreNormLayer(nn.Module):
     """
     Our pre-normalization layer, whose purpose is to normalize an input layer
@@ -92,7 +91,6 @@ class PreNormLayer(nn.Module):
 
         del self.avg, self.var, self.m2, self.count
         self.waiting_updates = False
-
 
 class BipartiteGraphConvolution(nn.Module):
     """
@@ -187,7 +185,6 @@ class BipartiteGraphConvolution(nn.Module):
 
         return output
 
-
 class GCNPolicy(nn.Module):
     """
     Our bipartite Graph Convolutional neural Network (GCN) model.
@@ -231,9 +228,16 @@ class GCNPolicy(nn.Module):
         self.conv_v_to_c = BipartiteGraphConvolution(self.emb_size, self.activation, self.initializer, right_to_left=True)
         self.conv_c_to_v = BipartiteGraphConvolution(self.emb_size, self.activation, self.initializer)
 
+        # OUTPUT
+        self.output_module = nn.Sequential(
+            nn.Linear(self.emb_size, self.emb_size, bias=True),
+            self.activation,
+            nn.Linear(self.emb_size, 1, bias=False)
+        )
+
         # self.initialize_parameters()
 
-    def forward(self, inputs):
+    def forward(self, inputs, logits=True):
         """
         Accepts stacked mini-batches, i.e. several bipartite graphs aggregated
         as one. In that case the number of variables per samples has to be
@@ -277,8 +281,25 @@ class GCNPolicy(nn.Module):
             constraint_features, edge_indices, edge_features, variable_features, n_vars_total))
         variable_features = self.activation(variable_features)
 
-        return variable_features
+        # OUTPUT
+        output = None
+        if logits:
+            output = self.output_module(variable_features)
+            output = torch.reshape(output, [1, -1])
 
+        return variable_features, output
+
+class MLP(nn.Module):
+    def __init__(self, in_size, out_size, activation):
+        super(MLP, self).__init__()
+
+        self.out = nn.Linear(in_size, out_size, bias=True)
+        self.activation = activation
+
+    def forward(self, input, betagamma):
+        x = self.activation(self.out(input))
+        x = x * betagamma[:, 0] + betagamma[:, 1]
+        return x
 
 class BaseModel(nn.Module):
     def initialize_parameters(self):
@@ -315,7 +336,6 @@ class BaseModel(nn.Module):
     def restore_state(self, filepath):
         self.load_state_dict(torch.load(filepath, map_location=torch.device('cpu')))
 
-
 class Policy(BaseModel):
     def __init__(self):
         super(Policy, self).__init__()
@@ -323,15 +343,25 @@ class Policy(BaseModel):
         self.root_gcn = GCNPolicy()
         self.n_input_feats = 92
         self.root_emb_size = self.root_gcn.emb_size
+        self.ff_size = 256
+        self.n_layers = 3
 
         self.activation = torch.nn.LeakyReLU()
         self.initializer = lambda x: torch.nn.init.orthogonal_(x, gain=1)
 
-        # HYPERNET GENEARTOR
-        self.weight_generator = nn.Sequential(
+        # FILM GENEARTOR
+        self.film_generator = nn.Sequential(
             nn.LayerNorm(self.root_emb_size),
-            nn.Linear(self.root_emb_size, self.n_input_feats)
+            nn.Linear(self.root_emb_size, self.n_layers * self.ff_size * 2)
         )
+
+        # OUTPUT
+        self.network = nn.ModuleList([
+            MLP(self.n_input_feats, self.ff_size, self.activation),
+            MLP(self.ff_size, self.ff_size, self.activation),
+            MLP(self.ff_size, self.ff_size, self.activation)
+        ])
+        self.out = nn.Linear(self.ff_size, 1, bias=False)
 
         self.initialize_parameters()
 
@@ -350,6 +380,25 @@ class Policy(BaseModel):
                 pad=[0, n_vars_max - x.shape[1], 0, 0],
                 mode='constant',
                 value=pad_value)
+            for x in output
+        ], dim=0)
+
+        return output
+
+    @staticmethod
+    def pad_features(features, n_vars_per_sample, pad_value=0):
+        n_vars_max = torch.max(n_vars_per_sample)
+        output = torch.split(
+            tensor=features,
+            split_size_or_sections=n_vars_per_sample.tolist(),
+            dim=0,
+        )
+
+        output = torch.cat([
+            F.pad(x,
+                pad=[0, 0, 0, n_vars_max - x.shape[0]],
+                mode='constant',
+                value=pad_value).unsqueeze(dim=0)
             for x in output
         ], dim=0)
 
@@ -389,14 +438,32 @@ class Policy(BaseModel):
         parameters : torch.tensor
             film-parameters to compute these logits (only if applicable)
         """
+
         root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_feats, _ = inputs
 
-        variable_features = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
+        variable_features, root_output = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
         cand_root_feats = variable_features[candss]
 
-        dot_weights = self.weight_generator(cand_root_feats)
-        dot_weights = dot_weights.view(-1, self.n_input_feats)
+        film_parameters = self.film_generator(cand_root_feats)
+        film_parameters = film_parameters.view(-1, self.n_layers, 2, self.ff_size)
 
-        output = torch.sum(cand_feats * dot_weights, axis=-1)
+        x = cand_feats
+        for n, subnet in enumerate(self.network):
+            x = subnet(x, film_parameters[:, n])
+
+        output = self.out(x)
         output = torch.reshape(output, [1, -1])
-        return F.normalize(variable_features, p=2, dim=1), output, None
+        return  F.normalize(variable_features, p=2, dim=1), output, film_parameters
+
+    def get_params(self, inputs):
+        variable_features, _ = self.root_gcn(inputs, logits=False)
+        film_parameters = self.film_generator(variable_features)
+        return film_parameters.view(-1, self.n_layers, 2, self.ff_size)
+
+    def predict(self, cand_feats, film_parameters):
+        x = cand_feats
+        for n, subnet in enumerate(self.network):
+            x = subnet(x, film_parameters[:, n])
+        output = self.out(x)
+        output = torch.reshape(output, [1, -1])
+        return output

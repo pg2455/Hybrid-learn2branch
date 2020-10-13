@@ -5,7 +5,6 @@ import torch.nn.functional as F
 class PreNormException(Exception):
     pass
 
-
 class PreNormLayer(nn.Module):
     """
     Our pre-normalization layer, whose purpose is to normalize an input layer
@@ -92,7 +91,6 @@ class PreNormLayer(nn.Module):
 
         del self.avg, self.var, self.m2, self.count
         self.waiting_updates = False
-
 
 class BipartiteGraphConvolution(nn.Module):
     """
@@ -187,7 +185,6 @@ class BipartiteGraphConvolution(nn.Module):
 
         return output
 
-
 class GCNPolicy(nn.Module):
     """
     Our bipartite Graph Convolutional neural Network (GCN) model.
@@ -279,7 +276,6 @@ class GCNPolicy(nn.Module):
 
         return variable_features
 
-
 class BaseModel(nn.Module):
     def initialize_parameters(self):
         for l in self.modules():
@@ -315,7 +311,6 @@ class BaseModel(nn.Module):
     def restore_state(self, filepath):
         self.load_state_dict(torch.load(filepath, map_location=torch.device('cpu')))
 
-
 class Policy(BaseModel):
     def __init__(self):
         super(Policy, self).__init__()
@@ -323,14 +318,23 @@ class Policy(BaseModel):
         self.root_gcn = GCNPolicy()
         self.n_input_feats = 92
         self.root_emb_size = self.root_gcn.emb_size
+        self.ff_size = 256
 
         self.activation = torch.nn.LeakyReLU()
         self.initializer = lambda x: torch.nn.init.orthogonal_(x, gain=1)
 
-        # HYPERNET GENEARTOR
-        self.weight_generator = nn.Sequential(
-            nn.LayerNorm(self.root_emb_size),
-            nn.Linear(self.root_emb_size, self.n_input_feats)
+        self.normalize_emb = nn.Sequential(
+            nn.LayerNorm(self.root_emb_size)
+        )
+        # OUTPUT
+        self.output_module = nn.Sequential(
+            nn.Linear(self.n_input_feats + self.root_emb_size, self.ff_size, bias=True),
+            self.activation,
+            nn.Linear(self.ff_size, self.ff_size, bias=True),
+            self.activation,
+            nn.Linear(self.ff_size, self.ff_size, bias=True),
+            self.activation,
+            nn.Linear(self.ff_size, 1, bias=False)
         )
 
         self.initialize_parameters()
@@ -392,11 +396,22 @@ class Policy(BaseModel):
         root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_feats, _ = inputs
 
         variable_features = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
-        cand_root_feats = variable_features[candss]
+        root_feats = variable_features[candss]
 
-        dot_weights = self.weight_generator(cand_root_feats)
-        dot_weights = dot_weights.view(-1, self.n_input_feats)
+        root_feats = self.normalize_emb(root_feats)
+        input = torch.cat([cand_feats, root_feats], axis=1)
+        output = self.output_module(input)
 
-        output = torch.sum(cand_feats * dot_weights, axis=-1)
         output = torch.reshape(output, [1, -1])
         return F.normalize(variable_features, p=2, dim=1), output, None
+
+    def predict(self, cand_feats, root_params):
+        input = torch.cat([cand_feats, root_params], axis=1)
+        output = self.output_module(input)
+
+        output = torch.reshape(output, [1, -1])
+        return output
+
+    def get_params(self, state):
+        variable_features = self.root_gcn(state)
+        return self.normalize_emb(variable_features)

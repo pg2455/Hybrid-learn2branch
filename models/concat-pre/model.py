@@ -94,6 +94,39 @@ class Policy(BaseModel):
         return output
 
     def forward(self, inputs):
+        """
+        Implements forward pass of the model
+
+        Parameters
+        ----------
+        root_c : torch.tensor
+            constraint features at the root node
+        root_ei : torch.tensor
+            indices to represent constraint-variable edges of the root node
+        root_ev : torch.tensor
+            edge features of the root node
+        root_v : torch.tensor
+            variable features at the root node
+        root_n_cs : torch.tensor
+            number of constraints per sample
+        root_n_vs : torch.tensor
+            number of variables per sample
+        candss : torch.tensor
+            candidate variable (strong branching candidates) indices at the root node
+        cand_feats : torch.tensor
+            candidate variable (strong branching candidates) features at a local node
+        cand_root_feats : torch.tensor
+            candidate root variable features at the root node
+
+        Return
+        ------
+        root_var_feats : torch.tensor
+            variable features computed from root gcnn (only if applicable)
+        logits : torch.tensor
+            output logits at the current node
+        parameters : torch.tensor
+            film-parameters to compute these logits
+        """
         cand_feats, cand_root_feats = inputs[-2:]
 
         root_feats = self.normalize_emb(cand_root_feats)
@@ -101,4 +134,4 @@ class Policy(BaseModel):
         output = self.output_module(input)
 
         output = torch.reshape(output, [1, -1])
-        return output
+        return None, output, None

@@ -89,16 +89,19 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
         root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs = root_g
         node_c, node_ei, node_ev, node_v, node_n_cs, node_n_vs, candss = node_g
         cand_features, n_cands, best_cands, cand_scores, weights  = node_attr
-
+        cands_root_v = None
         # use teacher
         with torch.no_grad():
             if not isinstance(teacher, None):
-                root_v, _ = teacher((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
-                cands_root_v = root_v[candss]
+                if not args.e2e:
+                    root_v, _ = teacher((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
+                    cands_root_v = root_v[candss]
 
-                _, soft_targets = teacher((node_c, node_ei, node_ev, node_v, node_n_cs, node_n_vs))
-                soft_targets = torch.unsqueeze(torch.gather(input=torch.squeeze(soft_targets, 0), dim=0, index=candss), 0)
-                soft_targets = model.pad_output(soft_targets, n_cands)  # apply padding now
+                # KD - get soft targets
+                if args.distilled:
+                    _, soft_targets = teacher((node_c, node_ei, node_ev, node_v, node_n_cs, node_n_vs))
+                    soft_targets = torch.unsqueeze(torch.gather(input=torch.squeeze(soft_targets, 0), dim=0, index=candss), 0)
+                    soft_targets = model.pad_output(soft_targets, n_cands)  # apply padding now
 
         batched_states = (root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_features, cands_root_v)
         batch_size = n_cands.shape[0]
@@ -106,7 +109,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
 
         if optimizer:
             optimizer.zero_grad()
-            logits = model(batched_states)  # eval mode
+            var_feats, logits, film_parameters = model(batched_states)  # eval mode
             logits = model.pad_output(logits, n_cands)  # apply padding now
             if args.distilled:
                 loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
@@ -120,7 +123,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
                 accum_iter = 0
         else:
             with torch.no_grad():
-                logits = model(batched_states)  # eval mode
+                var_feats, logits, film_parameters = model(batched_states)  # eval mode
                 logits = model.pad_output(logits, n_cands)  # apply padding now
                 if args.distilled:
                     loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
