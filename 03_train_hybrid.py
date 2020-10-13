@@ -92,7 +92,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
         cands_root_v = None
         # use teacher
         with torch.no_grad():
-            if not isinstance(teacher, None):
+            if teacher is not None:
                 if args.no_e2e:
                     root_v, _ = teacher((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
                     cands_root_v = root_v[candss]
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument(
         'problem',
         help='MILP instance type to process.',
-        choices=['setcover', 'cauctions', 'facilities', 'indset', 'maxcut'],
+        choices=['setcover', 'cauctions', 'facilities', 'indset'],
     )
     parser.add_argument(
         '-m', '--model',
