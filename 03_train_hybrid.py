@@ -64,7 +64,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
     model : model.BaseModel
         A base model, which may contain some model.PreNormLayer layers.
     teacher : model.BaseModel
-        A pretrained model when args.e2e is False, and an expert model when it is True.
+        A pretrained model when args.no_e2e is True, and an expert model when it is True.
     dataloader : torch.utils.data.DataLoader
         Dataset to use for training the model.
     top_k : list
@@ -93,7 +93,7 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
         # use teacher
         with torch.no_grad():
             if not isinstance(teacher, None):
-                if not args.e2e:
+                if args.no_e2e:
                     root_v, _ = teacher((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
                     cands_root_v = root_v[candss]
 
@@ -183,8 +183,8 @@ if __name__ == "__main__":
         default="data/samples/",
     )
     parser.add_argument(
-        '--e2e',
-        help='if training is end-to-end with a pretrained GCNN.',
+        '--no_e2e',
+        help='if training is with a pretrained GCNN.',
         action="store_true"
     )
     parser.add_argument(
@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
     if (
         args.model in ['concat', 'film']
-        and not args.e2e
+        and args.no_e2e
     ):
         args.model = f"{args.model}-pre"
 
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     teacher = None
     if (
         args.distilled
-        or not args.e2e
+        or args.no_e2e
     ):
         sys.path.insert(0, os.path.abspath(f'models/{teacher_model}'))
         import model
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
         if (
             epoch == 0
-            and args.e2e
+            and not args.no_e2e
         ):
             n = pretrain(model=model, dataloader=pretrain_data)
             log(f"PRETRAINED {n} LAYERS", logfile)
