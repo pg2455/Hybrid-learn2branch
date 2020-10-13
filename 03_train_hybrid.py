@@ -40,7 +40,7 @@ def pretrain(model, dataloader):
             g_c, g_ei, g_ev, g_v, g_n_cs, g_n_vs, candss = node_g
             cand_features, n_cands, best_cands, cand_scores, weights = node_attr
 
-            batched_states = (root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_features)
+            batched_states = (root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_features, None)
 
             if not model.pre_train(batched_states):
                 break
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         '-g', '--gpu',
         help='CUDA GPU id (-1 for CPU).',
         type=int,
-        default=-1,
+        default=0,
     )
     parser.add_argument(
         '--data_path',
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     early_stopping = 30
     top_k = [1, 3, 5, 10]
     num_workers = 5
-    teacher_model = "baseline_torch" # used only if args.distilled is True
+    teacher_model = "baseline_torch" # used only if args.distilled or args.no_e2e is True
     T = 2 # used only if args.distilled is True
     alpha = 0.9 # used only if args.distilled is True
 
@@ -289,6 +289,11 @@ if __name__ == "__main__":
 
     valid_data = Dataset(valid_files, args.data_path)
     valid_data = torch.utils.data.DataLoader(valid_data, batch_size=valid_batch_size,
+                            shuffle = False, num_workers = num_workers, collate_fn = load_batch)
+
+    pretrain_files = [f for i, f in enumerate(train_files) if i % 10 == 0]
+    pretrain_data = Dataset(pretrain_files, args.data_path)
+    pretrain_data = torch.utils.data.DataLoader(pretrain_data, batch_size=pretrain_batch_size,
                             shuffle = False, num_workers = num_workers, collate_fn = load_batch)
 
     ### MODEL LOADING ###
