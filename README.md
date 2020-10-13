@@ -64,6 +64,4 @@ python 04_test_gcnn_torch.py $PROBLEM
 
 python 05_evaluate_gcnn_torch.py $PROBLEM
 
-python  $PROBLEM
-python 05_evaluate_gcnn_torch.py $PROBLEM
 ```
