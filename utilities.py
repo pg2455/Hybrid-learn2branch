@@ -1,15 +1,22 @@
-import datetime
 import numpy as np
-# import scipy.sparse as sp
-import pyscipopt as scip
-import pickle
-import gzip
-import torch, wandb
+import torch
 import torch.nn.functional as F
 from learn2branch.utilities import log, init_scip_params, extract_state, valid_seed, compute_extended_variable_features, \
                         preprocess_variable_features, extract_khalil_variable_features
 
 def _preprocess(state, mode='min-max-1'):
+    """
+    Implements preprocessing of `state`.
+
+    Parameters
+    ----------
+    state : np.array
+        2D array of features. rows are variables and columns are features.
+
+    Return
+    ------
+    (np.array) : same shape as state but with transformed variables
+    """
     if mode == "min-max-1":
         return preprocess_variable_features(state, interaction_augmentation=False, normalization=True)
     elif mode == "min-max-2":
@@ -22,6 +29,9 @@ def _preprocess(state, mode='min-max-1'):
 
 
 def _loss_fn(logits, labels, weights):
+    """
+    Cross-entropy loss
+    """
     loss = torch.nn.CrossEntropyLoss(reduction='none')(logits, labels)
     return torch.sum(loss * weights)
 
