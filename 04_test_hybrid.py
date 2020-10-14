@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     ### HYPER PARAMETERS ###
     teacher_model = "baseline_torch" # used if pretrained model is used
-    seeds = [0]
+    seeds = [0, 1, 2]
     test_batch_size = 128
     top_k = [1, 3, 5, 10]
     num_workers = 5
@@ -129,15 +129,15 @@ if __name__ == '__main__':
 
     ### MODELS TO TEST ###
     if args.model_string != "":
-        models_to_evaluate = [y for y in pathlib.Path(f"trained_models/{args.problem}").iterdir() if args.model_string in y.name]
-        assert len(models_to_evaluate) > 0, f"no model matched the model_string: {args.model_string}"
+        models_to_test = [y for y in pathlib.Path(f"trained_models/{args.problem}").iterdir() if args.model_string in y.name]
+        assert len(models_to_test) > 0, f"no model matched the model_string: {args.model_string}"
     elif args.model_name != "":
         model_path = pathlib.Path(f"trained_models/{args.problem}/{args.model_name}")
         assert model_path.exists(), f"path: {model_path} doesn't exist"
-        models_to_evaluate = [model_path]
+        models_to_test = [model_path]
     else:
-        models_to_evaluate = [y for y in pathlib.Path(f"trained_models/{args.problem}").iterdir()]
-        assert len(models_to_evaluate) > 0, f"no model matched the model_string: {args.model_string}"
+        models_to_test = [y for y in pathlib.Path(f"trained_models/{args.problem}").iterdir()]
+        assert len(models_to_test) > 0, f"no model matched the model_string: {args.model_string}"
 
     ### OUTPUT ###
     result_file = f"test_results/{args.problem}_test_{time.strftime('%Y%m%d-%H%M%S')}.csv"
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     print(f"{len(test_files)} test samples")
 
     evaluated_policies = []
-    for model in models_to_evaluate:
+    for model in models_to_test:
         try:
             model_type = _get_model_type(model.name)
         except ValueError as e:
