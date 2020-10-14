@@ -1,3 +1,4 @@
+
 import os
 import sys
 import importlib
@@ -166,12 +167,7 @@ if __name__ == '__main__':
 
     ### PROBLEM SIZES TO EVALUATE ###
     if args.level != "all":
-        if args.level == "small":
-            instances = instances[:20]
-        elif args.level == "medium":
-            instances = instances[20:40]
-        elif args.level == "big":
-            instances = instances[40:60]
+        instances = [x for x in instances if x['type'] == args.level]
 
     branching_policies = []
 

@@ -367,7 +367,7 @@ if __name__ == "__main__":
         instances_train = glob.glob('data/instances/setcover/train_500r_1000c_0.05d/*.lp')
         instances_valid = glob.glob('data/instances/setcover/valid_500r_1000c_0.05d/*.lp')
         instances_test = glob.glob('data/instances/setcover/test_500r_1000c_0.05d/*.lp')
-        out_dir = f'{basedir}/setcover/500r_1000c_0.05'
+        out_dir = f'{basedir}/setcover/500r_1000c_0.05d'
 
     elif args.problem == 'cauctions':
         instances_train = glob.glob('data/instances/cauctions/train_100_500/*.lp')
@@ -387,7 +387,7 @@ if __name__ == "__main__":
         instances_test = glob.glob('data/instances/facilities/test_100_100_5/*.lp')
         out_dir = f'{basedir}/facilities/100_100_5'
         time_limit = 600
-        
+
     else:
         raise NotImplementedError
 

@@ -121,7 +121,7 @@ if __name__ == '__main__':
     num_workers = 5
 
     problem_folders = {
-        'setcover': '500r_1000c_0.05',
+        'setcover': '500r_1000c_0.05d',
         'cauctions': '100_500',
         'facilities': '100_100_5',
         'indset': '750_4',

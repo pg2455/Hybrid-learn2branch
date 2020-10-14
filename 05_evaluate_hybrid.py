@@ -174,7 +174,7 @@ if __name__ == '__main__':
         instances += [{'type': 'big', 'path': f"data/instances/facilities/transfer_400_100_5/instance_{i+1}.lp"} for i in range(20)]
 
     elif args.problem == 'indset':
-        instances += [{'type': 'small-medium', 'path': f"data/instances/indset/transfer_750_4/instance_{i+1}.lp"} for i in range(20)]
+        instances += [{'type': 'small', 'path': f"data/instances/indset/transfer_750_4/instance_{i+1}.lp"} for i in range(20)]
         instances += [{'type': 'medium', 'path': f"data/instances/indset/transfer_1000_4/instance_{i+1}.lp"} for i in range(20)]
         instances += [{'type': 'big', 'path': f"data/instances/indset/transfer_1500_4/instance_{i+1}.lp"} for i in range(20)]
 
@@ -187,12 +187,7 @@ if __name__ == '__main__':
 
     ### PROBLEM SIZES TO EVALUATE ###
     if args.level != "all":
-        if args.level == "small":
-            instances = instances[:20]
-        elif args.level == "medium":
-            instances = instances[20:40]
-        elif args.level == "big":
-            instances = instances[40:60]
+        instances = [x for x in instances if x['type'] == args.level]
 
     branching_policies = []
 

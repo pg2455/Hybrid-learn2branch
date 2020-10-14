@@ -1,3 +1,4 @@
+
 import os
 import importlib
 import argparse
@@ -138,7 +139,7 @@ if __name__ == '__main__':
         lr = 0.005 # for faster convergence
 
     problem_folders = {
-        'setcover': '500r_1000c_0.05',
+        'setcover': '500r_1000c_0.05d',
         'cauctions': '100_500',
         'facilities': '100_100_5',
         'indset': '750_4',
