@@ -106,3 +106,35 @@ def _distillation_loss(logits, teacher_scores, labels, weights, T, alpha):
     l_ce = torch.nn.CrossEntropyLoss(reduction='none')(logits, labels)
     l_ce = torch.sum(l_ce * weights)
     return l_kl * alpha + l_ce * (1. - alpha)
+
+
+def _get_model_type(model_name):
+    """
+    Returns the name of the model to which `model_name` belongs
+
+    Parameters
+    ----------
+    model_name : str
+        name of the model
+
+    Return
+    ------
+    (str) : name of the folder to which this model belongs
+    """
+    if "concat" in model_name:
+        if "-pre" in model_name:
+            return "concat-pre"
+        return "concat"
+
+    if "hybridsvm-film" in model_name:
+        return "hybridsvm-film"
+
+    if "hybridsvm" in model_name:
+        return "hybridsvm"
+
+    if "film" in model_name:
+        if "-pre" in model_name:
+            return "film-pre"
+        return "film"
+
+    raise ValueError(f"Unknown model_name:{model_name}")

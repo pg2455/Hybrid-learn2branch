@@ -8,7 +8,6 @@ import numpy as np
 from time import strftime
 from shutil import copyfile
 import gzip
-
 import torch
 
 import utilities
