@@ -12,10 +12,9 @@ import gzip
 import torch
 
 import utilities
-from utilities import log, _loss_fn, distillation
-import wandb
+from utilities import log, _loss_fn, _distillation_loss, _compute_root_loss
 
-from utilities_hybrid_torch import HybridDataset as Dataset, load_batch
+from utilities_hybrid import HybridDataset as Dataset, load_batch
 
 def pretrain(model, dataloader):
     """
@@ -86,10 +85,11 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
     accum_iter = 0
     for batch in dataloader:
         root_g, node_g, node_attr = [map(lambda x:x if x is None else x.to(device) , y) for y in batch]
-        root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs = root_g
+        root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, root_cands, root_n_cands = root_g
         node_c, node_ei, node_ev, node_v, node_n_cs, node_n_vs, candss = node_g
         cand_features, n_cands, best_cands, cand_scores, weights  = node_attr
         cands_root_v = None
+
         # use teacher
         with torch.no_grad():
             if teacher is not None:
@@ -111,10 +111,25 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
             optimizer.zero_grad()
             var_feats, logits, film_parameters = model(batched_states)  # eval mode
             logits = model.pad_output(logits, n_cands)  # apply padding now
+
+            # node loss
             if args.distilled:
-                loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
+                loss = _distillation_loss(logits, soft_targets, best_cands, weights, T, alpha)
             else:
                 loss = _loss_fn(logits, best_cands, weights)
+
+            # AT loss
+            if args.at != "":
+                loss  += args.beta_at * _compute_root_loss(args.at, model, var_feats, root_n_vs, root_cands, root_n_cands, batch_size, root_cands_separation)
+
+            # regularization
+            if (
+                args.l2 > 0
+                and film_parameters is not None
+            ):
+                beta_norm = (1-film_parameters[:, :, 0]).norm()
+                gamma_norm = film_parameters[:, :, 1].norm()
+                loss += args.l2 * (beta_norm + gamma_norm)
 
             loss.backward()
             accum_iter += 1
@@ -125,10 +140,25 @@ def process(model, teacher, dataloader, top_k, optimizer=None):
             with torch.no_grad():
                 var_feats, logits, film_parameters = model(batched_states)  # eval mode
                 logits = model.pad_output(logits, n_cands)  # apply padding now
+
+                # node loss
                 if args.distilled:
-                    loss = distillation(logits, soft_targets, best_cands, weights, T, alpha)
+                    loss = _distillation_loss(logits, soft_targets, best_cands, weights, T, alpha)
                 else:
                     loss = _loss_fn(logits, best_cands, weights)
+
+                # AT loss
+                if args.at != "":
+                    loss  += args.beta_at * _compute_root_loss(args.at, model, var_feats, root_n_vs, root_cands, root_n_cands, batch_size, root_cands_separation)
+
+                # regularization
+                if (
+                    args.l2 > 0
+                    and film_parameters is not None
+                ):
+                    beta_norm = (1-film_parameters[:, :, 0]).norm()
+                    gamma_norm = film_parameters[:, :, 1].norm()
+                    loss += args.l2 * (beta_norm + gamma_norm)
 
         true_scores = model.pad_output(torch.reshape(cand_scores, (1, -1)), n_cands)
         true_bestscore = torch.max(true_scores, dim=-1, keepdims=True).values
@@ -193,13 +223,20 @@ if __name__ == "__main__":
         action="store_true"
     )
     parser.add_argument(
-        '--auxiliary_task',
-        help='type of auxiliary task to use',
-        action="store_true"
+        '--at',
+        help='type of auxiliary task',
+        type=str,
+        choices=['ED', 'MHE']
+    )
+    parser.add_argument(
+        '--beta_at',
+        help='weight for at loss function',
+        type=float,
+        default=0,
     )
     parser.add_argument(
         '--l2',
-        help='value of l2 regularizer',
+        help='regularization film weights',
         type=float,
         default=0.0
     )
@@ -227,12 +264,20 @@ if __name__ == "__main__":
     T = 2 # used only if args.distilled is True
     alpha = 0.9 # used only if args.distilled is True
 
+    root_cands_separation=False
     if args.problem == "facilities":
+        # facilities have larger problem size (LPs have 10000 variables)
+        # these settings are chosen so that training is feasible in considerable time (about 6-12 hours)
         lr = 0.005
+        epoch_size=312*3
         batch_size = 16
         accum_steps = 2
+        patience=10
+        early_stopping=20
         pretrain_batch_size = 64
-        valid_batch_size = 64
+        valid_batch_size = 32
+        root_cands_separation=True
+        num_workers=7
 
     problem_folders = {
         'setcover': '500r_1000c_0.05',
@@ -243,9 +288,17 @@ if __name__ == "__main__":
 
     problem_folder = problem_folders[args.problem]
 
+    # DIRECTORY NAMING
     modeldir = f"{args.model}"
     if args.distilled:
         modeldir = f"{args.model}_distilled"
+
+    if args.at != "":
+        modeldir = f"{modeldir}_{args.at}_{args.beta_at}"
+
+    if args.l2 > 0:
+        modeldir = f"{modeldir}_l2_{args.l2}"
+
     running_dir = f"trained_models/{args.problem}/{modeldir}/{args.seed}"
 
     os.makedirs(running_dir)
@@ -265,6 +318,10 @@ if __name__ == "__main__":
     log(f"problem: {args.problem}", logfile)
     log(f"gpu: {args.gpu}", logfile)
     log(f"seed {args.seed}", logfile)
+    log(f"e2e: {not args.no_e2e}", logfile)
+    log(f"KD: {args.distilled}", logfile)
+    log(f"AT: {args.at} beta={args.beta_at}", logfile)
+    log(f"l2: {args.l2}", logfile)
 
     ### NUMPY / TORCH SETUP ###
     if args.gpu == -1:

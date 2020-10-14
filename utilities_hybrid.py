@@ -33,6 +33,7 @@ def _get_root_state(filename):
         sample_state, _, sample_cands, sample_action, cand_scores = pickle.load(f)['root_state']
     return sample_state, sample_cands, sample_action, cand_scores
 
+
 class HybridDataset(torch.utils.data.Dataset):
     def __init__(self, sample_files, rootdir = "data/samples/", weighing_scheme="sigmoidal_decay"):
         self.sample_files = sample_files
@@ -95,51 +96,15 @@ class HybridDataset(torch.utils.data.Dataset):
         root_g = [root_c, root_ei, root_ev, root_v, root_cands, root_action, root_cand_scores]
         return root_g, node_g, node_attr
 
+
 def load_batch(sample_batch):
     sample_batch = [list(zip(*x)) for x in list(zip(*sample_batch))]
     if len(sample_batch) == 3:
         root_g, node_g, node_attr = sample_batch
         root_c, root_ei, root_ev, root_v, root_cands, root_action, _ = root_g
-        root_g_states = load_batch_gcnn_minimal((root_c, root_ei, root_ev, root_v, None))
-        root_g_states = root_g_states[:-1]
-    else:
-        node_g, node_attr = sample_batch
-        root_g_states = [None] * 6
-
-    node_c, node_ei, node_ev, node_v = node_g
-    cand_featuress, sample_actions, sample_cands, cand_scoress, weights = node_attr
-
-    node_g = load_batch_gcnn_minimal((node_c, node_ei, node_ev, node_v, sample_cands))
-    n_cands = [cds.shape[0] for cds in sample_cands]
-
-    # convert to numpy arrays
-    cand_featuress = np.concatenate(cand_featuress, axis=0)
-    cand_scoress = np.concatenate(cand_scoress, axis=0)
-    n_cands = np.array(n_cands)
-    best_actions = np.array(sample_actions)
-    weights = np.array(weights)
-
-    # convert to tensors
-    cand_featuress = torch.as_tensor(cand_featuress, dtype=torch.float32)
-    cand_scoress = torch.as_tensor(cand_scoress, dtype=torch.float32)
-    n_cands = torch.as_tensor(n_cands, dtype=torch.int32)
-    best_actions = torch.as_tensor(sample_actions, dtype=torch.long)
-    weights = torch.as_tensor(weights, dtype=torch.float32)
-
-    node_attr = [cand_featuress, n_cands, best_actions, cand_scoress, weights]
-
-    return root_g_states, node_g, node_attr
-
-def load_batch_root_supervision(sample_batch):
-    sample_batch = [list(zip(*x)) for x in list(zip(*sample_batch))]
-    if len(sample_batch) == 3:
-        root_g, node_g, node_attr = sample_batch
-        root_c, root_ei, root_ev, root_v, root_cands, root_actions, root_cand_scores = root_g
         root_n_cands = torch.as_tensor(np.array([cds.shape[0] for cds in root_cands]), dtype=torch.int32)
         root_g_states = load_batch_gcnn_minimal((root_c, root_ei, root_ev, root_v, root_cands))
-        root_actions = torch.as_tensor(np.array(root_actions), dtype=torch.long)
-        root_cand_scores = torch.as_tensor(np.concatenate(root_cand_scores, axis=0), dtype=torch.float32)
-        root_g_states += [root_n_cands, root_actions, root_cand_scores]
+        root_g_states += [root_n_cands]
     else:
         node_g, node_attr = sample_batch
         root_g_states = [None] * 6

@@ -81,9 +81,9 @@ def _compute_root_loss(separation_type, model, var_feats, root_n_vs, root_cands,
         mask[i, torch.arange(nv), torch.arange(nv)] = 1.0
     mask = mask.type(torch.bool)
 
-    if signal_type == "MHE":
+    if separation_type == "MHE":
         D = torch.sqrt(2 * (1 - A) + 1e-3) ** -1 - 1/2
-    elif signal_type == "ED":
+    elif separation_type == "ED":
         D = 4 - 2 * (1 - A)
     else:
         raise ValueError(f"Unknown signal for auxiliary task: {signal_type}")
