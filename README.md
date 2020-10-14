@@ -19,8 +19,8 @@ python 02_generate_dataset.py $PROBLEM
 
 # train models
 
-# GCNN
-python 03_train_gcnn_torch.py $PROBLEM # PyTorch version of learn2branch GCNN
+# GNN
+python 03_train_gcnn_torch.py $PROBLEM # PyTorch version of learn2branch GNN
 
 # COMP
 ## Note: use symlink inside learn2branch/ to point to data/ in the current directory
@@ -52,16 +52,19 @@ python 03_train_hybrid.py $PROBLEM -m hybridsvm-film # (e2e)
 python 03_train_hybrid.py $PROBLEM -m hybridsvm-film --distilled  # (e2e + KD)
 
 # AT
+python 03_train_hybrid.py $PROBLEM -m film --at ED --beta_at 0.001
 
 # l2 regularization
-
+python 03_train_hybrid.py $PROBLEM -m film --at ED --beta_at 0.001 --l2 0.001
 
 # test models
 python 04_test_gcnn_torch.py $PROBLEM
-
+python 04_test_hybrid.py $PROBLEM
 
 # evaluate models
 
-python 05_evaluate_gcnn_torch.py $PROBLEM
+python 05_evaluate_gcnn_torch.py $PROBLEM -g -1 # GNN-CPU
+python 05_evaluate_gcnn_torch.py $PROBLEM -g 0 # GNN-GPU
+python 05_evaluate_hybrid.py $PROBLEM -g -1 
 
 ```
