@@ -67,7 +67,7 @@ def process(model, dataloader, top_k, optimizer=None):
     top_k : list
         list of `k` (int) to estimate for accuracy using these many candidates
     optimizer :  torch.optim
-        optimizer to use for SGD. No gradient computation takes place if its None. 
+        optimizer to use for SGD. No gradient computation takes place if its None.
 
     Return
     ------

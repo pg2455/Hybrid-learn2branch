@@ -285,8 +285,6 @@ if __name__ == "__main__":
         'indset': '750_4',
     }
 
-    problem_folder = problem_folders[args.problem]
-
     # DIRECTORY NAMING
     modeldir = f"{args.model}"
     if args.distilled:
@@ -334,6 +332,7 @@ if __name__ == "__main__":
     torch.manual_seed(rng.randint(np.iinfo(int).max))
 
     ### SET-UP DATASET ###
+    problem_folder = problem_folders[args.problem]
     train_files = list(pathlib.Path(f"{args.data_path}/{args.problem}/{problem_folder}/train").glob('sample_*.pkl'))
     valid_files = list(pathlib.Path(f"{args.data_path}/{args.problem}/{problem_folder}/valid").glob('sample_*.pkl'))
 
