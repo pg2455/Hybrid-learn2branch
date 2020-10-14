@@ -36,23 +36,33 @@ def _loss_fn(logits, labels, weights):
     return torch.sum(loss * weights)
 
 
-def _compute_root_loss(inputs):
+def _compute_root_loss(separation_type, model, var_feats, root_n_vs, root_cands, root_n_cands, batch_size, root_cands_separation=False):
     """
     Computes losses due to auxiliary task imposed on root GCNN.
 
     Parameters
     ----------
-    inputs : tuple
-        contains the type of separation at root GCNN, pytorch model, variable features at root,
-            root_cands_separation (whether the separation loss is to be computed for root variables only),
-            and rest of the output from load_batch_gcnn_minimal
+    separation_type : str
+        Type of separation to compute at root node's variable features
+    model : model.BaseModel
+        A base model, which may contain some model.PreNormLayer layers.
+    var_feats : torch.tensor
+        (2D) variable features at the root node
+    root_n_vs : torch.tensor
+        (1D) number of variables per sample
+    root_cands : torch.tensor
+        (1D) candidates variables (strong branching) at the root node
+    root_n_cands : torch.tensor
+        (1D) number of root candidate variables per sample
+    batch_size : int
+        number of samples
+    root_cands_separation : bool
+        True if separation is to be computed only between candidate variables at the root node. Useful for larger problems like Capacitated Facility Location.
 
     Return
     ------
     (np.float): loss value
     """
-
-    signal_type, model, var_feats, root_cands_separation, root_n_vs, root_cands, root_n_cands, batch_size = inputs
 
     if root_cands_separation:
         # compute separation loss only for candidates at root
@@ -71,9 +81,9 @@ def _compute_root_loss(inputs):
         mask[i, torch.arange(nv), torch.arange(nv)] = 1.0
     mask = mask.type(torch.bool)
 
-    if signal_type == "mhe":
+    if signal_type == "MHE":
         D = torch.sqrt(2 * (1 - A) + 1e-3) ** -1 - 1/2
-    elif signal_type == "distance-squared":
+    elif signal_type == "ED":
         D = 4 - 2 * (1 - A)
     else:
         raise ValueError(f"Unknown signal for auxiliary task: {signal_type}")
@@ -85,7 +95,7 @@ def _compute_root_loss(inputs):
     return root_loss
 
 
-def distillation(logits, teacher_scores, labels, weights, T, alpha):
+def _distillation_loss(logits, teacher_scores, labels, weights, T, alpha):
     """
     Implements distillation loss.
     """
