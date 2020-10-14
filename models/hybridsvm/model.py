@@ -400,3 +400,39 @@ class Policy(BaseModel):
         output = torch.sum(cand_feats * dot_weights, axis=-1)
         output = torch.reshape(output, [1, -1])
         return F.normalize(variable_features, p=2, dim=1), output, None
+
+    def get_params(self, inputs):
+        """
+        Returns parameters/variable representations inferred at the root node.
+
+        Parameters
+        ----------
+        inputs : torch.tensor
+            inputs to be used by the root node GNN
+
+        Returns
+        -------
+        (torch.tensor): variable representations / parameters as inferred from root gcnn and to be used else where in the tree.
+        """
+        variable_features = self.root_gcn(inputs)
+        dot_weights = self.weight_generator(variable_features)
+        return dot_weights.view(-1, self.n_input_feats)
+
+    def predict(self, cand_feats, dot_weights):
+        """
+        Predicts score for each candindate represented by cand_feats
+
+        Parameters
+        ----------
+        cand_feats : torch.tensor
+            (2D) representing input features of variables at any node in the tree
+        dot_weights : torch.tensor
+            (2D) parameters that are used to modulate MLP outputs. Same size as cand_feats.
+
+        Returns
+        -------
+        (torch.tensor) : (1D) a score for each candidate
+        """
+        output = torch.sum(cand_feats * dot_weights, axis=-1)
+        output = torch.reshape(output, [1, -1])
+        return output

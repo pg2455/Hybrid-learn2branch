@@ -456,11 +456,37 @@ class Policy(BaseModel):
         return  F.normalize(variable_features, p=2, dim=1), output, film_parameters
 
     def get_params(self, inputs):
+        """
+        Returns parameters/variable representations inferred at the root node.
+
+        Parameters
+        ----------
+        inputs : torch.tensor
+            inputs to be used by the root node GNN
+
+        Returns
+        -------
+        (torch.tensor): variable representations / parameters as inferred from root gcnn and to be used else where in the tree.
+        """
         variable_features, _ = self.root_gcn(inputs, logits=False)
         film_parameters = self.film_generator(variable_features)
         return film_parameters.view(-1, self.n_layers, 2, self.ff_size)
 
     def predict(self, cand_feats, film_parameters):
+        """
+        Predicts score for each candindate represented by cand_feats
+
+        Parameters
+        ----------
+        cand_feats : torch.tensor
+            (2D) representing input features of variables at any node in the tree
+        film_parameters : torch.tensor
+            (2D) parameters that are used to module MLP outputs. Same size as cand_feats.
+
+        Returns
+        -------
+        (torch.tensor) : (1D) a score for each candidate
+        """
         x = cand_feats
         for n, subnet in enumerate(self.network):
             x = subnet(x, film_parameters[:, n])

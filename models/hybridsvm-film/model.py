@@ -403,3 +403,41 @@ class Policy(BaseModel):
         output = torch.sum(film_parameters[:,2] * film_feats, axis=-1)
         output = torch.reshape(output, [1, -1])
         return F.normalize(variable_features, p=2, dim=1), output, film_parameters
+
+    def get_params(self, inputs):
+        """
+        Returns parameters/variable representations inferred at the root node.
+
+        Parameters
+        ----------
+        inputs : torch.tensor
+            inputs to be used by the root node GNN
+
+        Returns
+        -------
+        (torch.tensor): variable representations / parameters as inferred from root gcnn and to be used else where in the tree.
+        """
+        variable_features = self.root_gcn(inputs)
+        film_parameters = self.weight_generator(variable_features)
+        return film_parameters.view(-1, 3, self.n_layers * self.n_input_feats)
+
+    def predict(self, cand_feats, film_parameters):
+        """
+        Predicts score for each candindate represented by cand_feats
+
+        Parameters
+        ----------
+        cand_feats : torch.tensor
+            (2D) representing input features of variables at any node in the tree
+        film_parameters : torch.tensor
+            (2D) parameters that are used to module MLP outputs. Same size as cand_feats.
+
+        Returns
+        -------
+        (torch.tensor) : (1D) a score for each candidate
+        """
+        cand_feats = cand_feats.repeat(1, self.n_layers)
+        film_feats = self.activation(film_parameters[:,0] * cand_feats + film_parameters[:,1])
+        output = torch.sum(film_parameters[:,2] * film_feats, axis=-1)
+        output = torch.reshape(output, [1, -1])
+        return output
