@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     ## OUTPUT
     device = "CPU" if args.gpu == -1 else "GPU"
-    result_file = f"{args.problem}_GCNN_{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
+    result_file = f"GCNN_{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
     eval_dir = f"eval_results/{args.problem}"
     os.makedirs(eval_dir, exist_ok=True)
     result_file = f"{eval_dir}/{result_file}"

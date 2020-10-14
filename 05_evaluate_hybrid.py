@@ -143,7 +143,7 @@ if __name__ == '__main__':
     result_dir = f"eval_results/{args.problem}"
     os.makedirs(result_dir, exist_ok=True)
     device = "CPU" if args.gpu == -1 else "GPU"
-    result_file = f"{result_dir}/{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
+    result_file = f"{result_dir}/hybrid_{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
 
     ### MODELS TO EVALUATE ###
     basedir = f"{args.trained_models}/{args.problem}"
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         models_to_evaluate = [model_path]
     else:
         models_to_evaluate = [y for y in pathlib.Path(f"{basedir}").iterdir()]
-        assert len(models_to_evaluate) > 0, f"no model matched the model_string: {args.model_string} in in {basedir}"
+        assert len(models_to_evaluate) > 0, f"no model found in {basedir}"
 
     if args.problem == 'setcover':
         instances += [{'type': 'small', 'path': f"data/instances/setcover/transfer_500r_1000c_0.05d/instance_{i+1}.lp"} for i in range(20)]
@@ -177,11 +177,6 @@ if __name__ == '__main__':
         instances += [{'type': 'small-medium', 'path': f"data/instances/indset/transfer_750_4/instance_{i+1}.lp"} for i in range(20)]
         instances += [{'type': 'medium', 'path': f"data/instances/indset/transfer_1000_4/instance_{i+1}.lp"} for i in range(20)]
         instances += [{'type': 'big', 'path': f"data/instances/indset/transfer_1500_4/instance_{i+1}.lp"} for i in range(20)]
-
-    elif args.problem == 'maxcut':
-        instances += [{'type': 'small', 'path': f"data/instances/maxcut/transfer_nmin_50_nmax_75/instance_{i+1}.lp"} for i in range(20)]
-        instances += [{'type': 'medium', 'path': f"data/instances/maxcut/transfer_nmin_75_nmax_100/instance_{i+1}.lp"} for i in range(20)]
-        instances += [{'type': 'big', 'path': f"data/instances/maxcut/transfer_nmin_100_nmax_125/instance_{i+1}.lp"} for i in range(20)]
 
     else:
         raise NotImplementedError
@@ -337,7 +332,7 @@ if __name__ == '__main__':
                     'walltime': walltime,
                     'proctime': proctime,
                     'problem':args.problem,
-                    'device': "CPU" if args.gpu == -1 else "GPU"
+                    'device': device
                 })
 
                 csvfile.flush()
