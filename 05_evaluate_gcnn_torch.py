@@ -98,12 +98,18 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    device = "CPU" if args.gpu == -1 else "GPU"
-    result_file = f"{args.problem}_GCNN_{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
     instances = []
     seeds = [0, 1, 2]
     gcnn_models = ['baseline_torch']
     time_limit = 2700
+
+    ## OUTPUT
+    device = "CPU" if args.gpu == -1 else "GPU"
+    result_file = f"{args.problem}_GCNN_{device}_{time.strftime('%Y%m%d-%H%M%S')}.csv"
+    eval_dir = f"eval_results/{args.problem}"
+    os.makedirs(eval_dir, exist_ok=True)
+    result_file = f"{eval_dir}/{result_file}"
+
 
     if args.problem == 'setcover':
         instances += [{'type': 'small', 'path': f"data/instances/setcover/transfer_500r_1000c_0.05d/instance_{i+1}.lp"} for i in range(20)]
@@ -184,7 +190,7 @@ if __name__ == '__main__':
         'proctime',
     ]
 
-    with open(f"eval_results_gcnn/{result_file}", 'a', newline='') as csvfile:
+    with open(result_file, 'a', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
