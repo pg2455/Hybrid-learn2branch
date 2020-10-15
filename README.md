@@ -129,3 +129,17 @@ python learn2branch/05_evaluate.py $PROBLEM --internal_brancher pscost --time_li
 python learn2branch/05_evaluate.py $PROBLEM --internal_brancher relpscost --time_limit 2700 --no_gnn  -g -1 # RPB
 python learn2branch/05_evaluate.py $PROBLEM --internal_brancher fullstrong --time_limit 2700 --no_gnn  -g -1 # FSB
 ```
+
+## Citation
+Please cite our paper if you use this code in your work.
+```
+@inproceedings{conf/nips/Gupta20hybrid,
+  title={Hybrid Models for Learning to Branch},
+  author={Gupta, Prateek and Gasse, Maxime and Khalil, Elias B and Kumar, M Pawan and Lodi, Andrea and Bengio, Yoshua},
+  booktitle={Advances in Neural Information Processing Systems 32},
+  year={2020}
+}
+```
+
+## Questions / Bugs
+Please feel free to submit a Github issue if you have any questions or find any bugs. We do not guarantee any support, but will do our best if we can help.
