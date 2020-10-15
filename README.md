@@ -85,8 +85,8 @@ python 03_train_hybrid.py $PROBLEM -m hybridsvm-film # (e2e)
 python 03_train_hybrid.py $PROBLEM -m hybridsvm-film --distilled  # (e2e + KD)
 
 # Auxiliary task (AT)
-python 03_train_hybrid.py $PROBLEM -m film --at ED --beta_at 0.001 (e2e + AT)
-python 03_train_hybrid.py $PROBLEM -m film --distilled --at ED --beta_at 0.001 (e2e + KD + AT)
+python 03_train_hybrid.py $PROBLEM -m film --at ED --beta_at 0.001 # (e2e + AT)
+python 03_train_hybrid.py $PROBLEM -m film --distilled --at ED --beta_at 0.001 # (e2e + KD + AT)
 
 # l2 regularization
 python 03_train_hybrid.py $PROBLEM -m film --at ED --beta_at 0.001 --l2 0.001
