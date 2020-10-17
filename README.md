@@ -136,7 +136,7 @@ Please cite our paper if you use this code in your work.
 @inproceedings{conf/nips/Gupta20hybrid,
   title={Hybrid Models for Learning to Branch},
   author={Gupta, Prateek and Gasse, Maxime and Khalil, Elias B and Kumar, M Pawan and Lodi, Andrea and Bengio, Yoshua},
-  booktitle={Advances in Neural Information Processing Systems 33},
+  booktitle={Advances in Neural Information Processing Systems 34},
   year={2020}
 }
 ```
