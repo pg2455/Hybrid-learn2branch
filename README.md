@@ -8,7 +8,6 @@ This is the official implementation of our NeurIPS 2020 [paper](https://arxiv.or
 
 This work is built upon [learn2branch](https://github.com/ds4dm/learn2branch), which proposes Graph Neural Network for learning to branch.
 We use it as a [git submodule](https://www.git-scm.com/book/en/v2/Git-Tools-Submodules).
-
 Follow installation instructions of [learn2branch](https://github.com/ds4dm/learn2branch/blob/master/INSTALL.mdd) to install [SCIP](https://www.scipopt.org/).
 
 Following python dependencies were used to run the code in this repository
@@ -34,6 +33,7 @@ In the instructions below we assumed that a bash variable `PROBLEM` exists. For 
 ```bash
 PROBLEM=setcover
 ```
+Below instructions assume access to `data/` folder in the repo. Please look at the argument flags in each of the script to use another folder.
 
 ### Generate Instances
 ```bash
@@ -117,7 +117,7 @@ python 05_evaluate_gcnn_torch.py $PROBLEM -g 0 # GNN-GPU
 python 05_evaluate_mlp.py $PROBLEM -g -1
 
 # COMP
-python learn2branch/05_evaluate.py $PROBLEM --ml_comp_brancher svmrank_khalil --time_limit 2700 --no_gnn --hybrid_data_structure -g -1
+python learn2branch/05_evaluate.py $PROBLEM --ml_comp_brancher use_best_performing_ml_competitor_folder_name --time_limit 2700 --no_gnn --hybrid_data_structure -g -1
 
 
 # FiLM

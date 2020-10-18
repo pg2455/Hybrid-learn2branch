@@ -353,9 +353,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    train_size = 100000
-    valid_size = 20000
-    test_size = 20000
+    train_size = 150000
+    valid_size = 30000
+    test_size = 30000
     time_limit = 3600
     node_limit = 500
 
