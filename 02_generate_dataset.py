@@ -379,7 +379,7 @@ if __name__ == "__main__":
         instances_train = glob.glob('data/instances/indset/train_750_4/*.lp')
         instances_valid = glob.glob('data/instances/indset/valid_750_4/*.lp')
         instances_test = glob.glob('data/instances/indset/test_750_4/*.lp')
-        out_dir = f'{basedir}/indset/500_4'
+        out_dir = f'{basedir}/indset/750_4'
 
     elif args.problem == 'facilities':
         instances_train = glob.glob('data/instances/facilities/train_100_100_5/*.lp')
@@ -410,7 +410,7 @@ if __name__ == "__main__":
     if args.problem == "indset":
         mediumvalid_size = 2000
         instances_mediumvalid = glob.glob('data/instances/indset/mediumvalid_1000_4/*.lp')
-        out_dir = f'{basedir}/indset/750_4'
+        out_dir = f'{basedir}/indset/1000_4'
 
         rng = np.random.RandomState(args.seed + 1)
         collect_samples(instances_mediumvalid, out_dir +"/mediumvalid", rng, mediumvalid_size, args.njobs, time_limit)
