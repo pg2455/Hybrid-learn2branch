@@ -130,6 +130,8 @@ python learn2branch/05_evaluate.py $PROBLEM --internal_brancher relpscost --time
 python learn2branch/05_evaluate.py $PROBLEM --internal_brancher fullstrong --time_limit 2700 --no_gnn  -g -1 # FSB
 ```
 
+Follow the instructions [here](https://github.com/pg2455/Hybrid-learn2branch/blob/master/RESULTS.md) to reproduce the evaluation resutls (Table 4).
+
 ## Citation
 Please cite our paper if you use this code in your work.
 ```
