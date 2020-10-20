@@ -1,10 +1,10 @@
 ##
 
-There are several combinations of training protocols that one can use to train hybrid models.
+There are several combinations of training protocols that one can use to train the hybrid models.
 We report several empirical insights in the supplementary material.
 
 Here, we focus on the procedure to obtain the models that are used for evaluation (Table 4).
-Following set of commands will give all the models used in the paper.
+Following set of commands will give the required models.
 
 ```bash
 # generate instances
@@ -41,7 +41,7 @@ python learn2branch/04_test.py $PROBLEM --no_gnn --ml_comp_brancher extratrees_g
 python 04_test_hybrid.py $PROBLEM --model_string film
 
 # Train more
-# Add AT to film to the best performing model between (A) and (B). Assuming that its (A) that is the best ...
+# Add AT to the best performing film model out of (A) and (B). Assuming that (A) is the best ...
 for seed in 0 1 2
 do
   for beta in 0.1 0.01 0.001 0.0001
@@ -51,7 +51,7 @@ do
   done
 done
 
-# Test AT models. Call the best performing film model at this stage as C.
+# Test AT models. Call the best performing film model after this test as C.
 python 04_test_hybrid.py $PROBLEM --model_string film
 
 # for independent set only; we regularize film parameters and use that as C
