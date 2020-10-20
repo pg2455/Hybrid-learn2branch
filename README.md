@@ -8,7 +8,7 @@ This is the official implementation of our NeurIPS 2020 [paper](https://arxiv.or
 
 This work is built upon [learn2branch](https://github.com/ds4dm/learn2branch), which proposes Graph Neural Network for learning to branch.
 We use it as a [git submodule](https://www.git-scm.com/book/en/v2/Git-Tools-Submodules).
-Follow installation instructions of [learn2branch](https://github.com/ds4dm/learn2branch/blob/master/INSTALL.mdd) to install [SCIP](https://www.scipopt.org/).
+Follow installation instructions of [learn2branch](https://github.com/ds4dm/learn2branch/blob/master/INSTALL.md) to install [SCIP](https://www.scipopt.org/) and PySCIPOpt.
 
 Following python dependencies were used to run the code in this repository
 ```
