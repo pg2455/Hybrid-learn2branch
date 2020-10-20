@@ -95,6 +95,12 @@ if __name__ == '__main__':
         type=int,
         default=0,
     )
+    parser.add_argument(
+        '--test_path',
+        help='if given, searches for samples in this path',
+        type=str,
+        default='',
+    )
     args = parser.parse_args()
 
     ### HYPER PARAMETERS ###
@@ -126,7 +132,11 @@ if __name__ == '__main__':
         device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
 
     ### SET-UP DATASET ###
-    test_files = list(pathlib.Path(f"data/samples/{args.problem}/{problem_folder}/test").glob('sample_*.pkl'))
+    problem_folder = f"data/samples/{args.problem}/{problem_folders[args.problem]}/test"
+    if args.test_path:
+        problem_folder = args.test_path
+
+    test_files = list(pathlib.Path(problem_folder).glob('sample_*.pkl'))
     test_files = [str(x) for x in test_files]
     test_data = Dataset(test_files)
     test_data = torch.utils.data.DataLoader(test_data, batch_size=test_batch_size,
