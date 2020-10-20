@@ -96,11 +96,17 @@ if __name__ == '__main__':
         type=int,
         default=-1,
     )
+    parser.add_argument(
+        '--model_name',
+        help='searches for this model_name in respective trained_models folder',
+        type=str,
+        default='baseline_torch',
+    )
     args = parser.parse_args()
 
     instances = []
     seeds = [0, 1, 2]
-    gcnn_models = ['baseline_torch']
+    gcnn_models = [args.model_name]
     time_limit = 2700
 
     ## OUTPUT
