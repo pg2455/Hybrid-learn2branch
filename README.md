@@ -10,6 +10,12 @@ This work is built upon [learn2branch](https://github.com/ds4dm/learn2branch), w
 We use it as a [git submodule](https://www.git-scm.com/book/en/v2/Git-Tools-Submodules).
 Follow installation instructions of [learn2branch](https://github.com/ds4dm/learn2branch/blob/master/INSTALL.md) to install [SCIP](https://www.scipopt.org/) and PySCIPOpt.
 
+**UPDATE** As pointed out in [PR#2](https://github.com/pg2455/Hybrid-learn2branch/issues/2), a function needs to be added in the [class Column](https://github.com/scipopt/PySCIPOpt/blob/v3.0.4/src/pyscipopt/scip.pyx#L314) of PySCIPOpt. Please add the following function there before installation of PySCIPOpt-
+```cpython
+def getIndex(self):
+  return SCIPcolGetIndex(self.scip_col)
+```
+
 Following python dependencies were used to run the code in this repository
 ```
 torch==1.4.0.dev20191031
