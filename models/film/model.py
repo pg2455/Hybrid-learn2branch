@@ -190,7 +190,7 @@ class GCNPolicy(nn.Module):
     Our bipartite Graph Convolutional neural Network (GCN) model.
     """
 
-    def __init__(self):
+    def __init__(self, output_logits):
         super(GCNPolicy, self).__init__()
 
         self.emb_size = 64
@@ -229,15 +229,16 @@ class GCNPolicy(nn.Module):
         self.conv_c_to_v = BipartiteGraphConvolution(self.emb_size, self.activation, self.initializer)
 
         # OUTPUT
-        self.output_module = nn.Sequential(
-            nn.Linear(self.emb_size, self.emb_size, bias=True),
-            self.activation,
-            nn.Linear(self.emb_size, 1, bias=False)
-        )
+        if output_logits:
+            self.output_module = nn.Sequential(
+                nn.Linear(self.emb_size, self.emb_size, bias=True),
+                self.activation,
+                nn.Linear(self.emb_size, 1, bias=False)
+            )
 
         # self.initialize_parameters()
 
-    def forward(self, inputs, logits=True):
+    def forward(self, inputs, logits=False):
         """
         Accepts stacked mini-batches, i.e. several bipartite graphs aggregated
         as one. In that case the number of variables per samples has to be
@@ -337,10 +338,11 @@ class BaseModel(nn.Module):
         self.load_state_dict(torch.load(filepath, map_location=torch.device('cpu')))
 
 class Policy(BaseModel):
-    def __init__(self):
+    def __init__(self, use_root_logits=False):
         super(Policy, self).__init__()
 
-        self.root_gcn = GCNPolicy()
+        self.use_root_logits = use_root_logits
+        self.root_gcn = GCNPolicy(output_logits=use_root_logits)
         self.n_input_feats = 92
         self.root_emb_size = self.root_gcn.emb_size
         self.ff_size = 256
@@ -441,7 +443,7 @@ class Policy(BaseModel):
 
         root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs, candss, cand_feats, _ = inputs
 
-        variable_features, root_output = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs))
+        variable_features, root_output = self.root_gcn((root_c, root_ei, root_ev, root_v, root_n_cs, root_n_vs), self.use_root_logits)
         cand_root_feats = variable_features[candss]
 
         film_parameters = self.film_generator(cand_root_feats)

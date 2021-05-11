@@ -52,6 +52,11 @@ class HybridDataset(torch.utils.data.Dataset):
             sample_state, _, root_cands, root_action, root_cand_scores = sample['root_state']
         else:
             root_filename = sample['root_state']
+            if not pathlib.Path(root_filename).exists():
+                if 'indset_medium' in root_filename:
+                    root_filename = str(pathlib.Path(self.rootdir, "indset","/".join(root_filename.split("/")[3:])))
+                else:
+                    root_filename = str(pathlib.Path(self.rootdir, "/".join(root_filename.split("/")[1:])))
             sample_state, root_cands, root_action,  root_cand_scores = _get_root_state(root_filename)
 
         c,e,v = sample_state
