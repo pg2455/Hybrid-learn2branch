@@ -185,7 +185,10 @@ def make_samples(in_queue, out_queue):
                     'stats': stats,
                     'root_state': [sample_state, sample_khalil_state, sample_cands, cand_choice, sample_cand_scores],
                     'obss': [branchrule.obss[0], branchrule.targets[0], branchrule.obss_feats[0], None],
-                    'max_depth': max_depth
+                    'max_depth': max_depth,
+                    'row_feats_extra': branchrule.state_buffer['row_feats_extra'],
+                    'coef_matrix_raw': branchrule.state_buffer['coef_matrix_raw'],
+                    'col_feats_extra': branchrule.state_buffer['col_feats_extra']
                     }, f)
 
             # node data
