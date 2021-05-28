@@ -1,3 +1,4 @@
+
 """
 File adapted from https://github.com/ds4dm/learn2branch
 """
@@ -27,6 +28,9 @@ class VanillaFullstrongBranchingDataCollector(scip.Branchrule):
         self.query_expert_prob = query_expert_prob
         self.rng = rng
         self.iteration_counter = 0
+        self.state_buffer = {}
+        self.raw_obs = {}
+        self.feat_names = {}
 
     def branchinit(self):
         self.ndomchgs = 0
@@ -87,6 +91,9 @@ class VanillaFullstrongBranchingDataCollector(scip.Branchrule):
             self.targets = []
             self.obss_feats = []
             self.map = sorted([x.getCol().getIndex() for x in self.model.getVars(transformed=True)])
+            raw_key_obs = 'root'
+        else:
+            raw_key_obs = 'non_root'
 
         cands, scores = cands_scores
         # Do not record inconsistent scores. May happen if SCIP was early stopped (time limit).
@@ -97,6 +104,15 @@ class VanillaFullstrongBranchingDataCollector(scip.Branchrule):
         var_features = state[2]['values']
         cons_features = state[0]['values']
         edge_features = state[1]
+
+        if raw_key_obs not in self.raw_obs:
+            obj_norm = 0 # (workaround) state_buffer is empty for the root; this is by design
+            if 'state' in self.state_buffer:
+                obj_norm = self.state_buffer['state']['obj_norm']
+                self.raw_obs["root"]['obj_norm'] = obj_norm
+
+            self.raw_obs[raw_key_obs] = {'c':state[0]['raw'], 'e':state[1]['raw'], 'v':state[2]['raw'], 'obj_norm': obj_norm}
+            self.feat_names = {'c': state[0]['names'], 'v':state[2]['names']}
 
         # add more features to variables
         cands_index = [x.getCol().getIndex() for x in cands]
@@ -186,9 +202,9 @@ def make_samples(in_queue, out_queue):
                     'root_state': [sample_state, sample_khalil_state, sample_cands, cand_choice, sample_cand_scores],
                     'obss': [branchrule.obss[0], branchrule.targets[0], branchrule.obss_feats[0], None],
                     'max_depth': max_depth,
-                    'row_feats_extra': branchrule.state_buffer['row_feats_extra'],
-                    'coef_matrix_raw': branchrule.state_buffer['coef_matrix_raw'],
-                    'col_feats_extra': branchrule.state_buffer['col_feats_extra']
+                    'raw_root_obs': branchrule.raw_obs['root'],
+                    'raw_non_root_obs': branchrule.raw_obs['non_root'],
+                    'feat_names': branchrule.feat_names,
                     }, f)
 
             # node data

@@ -32,10 +32,10 @@ def _get_root_state(filename):
     with gzip.open(filename, 'rb') as f:
         root_obs = pickle.load(f)
         sample_state, _, sample_cands, sample_action, cand_scores = root_obs['root_state']
-        raw_rows = root_obs.get('row_feats_extra', None)
-        raw_coef_matrix = root_obs.get('coef_matrix_raw', None)
-        raw_cols = root_obs.get('col_feats_extra', None)
-    return sample_state, sample_cands, sample_action, cand_scores, (raw_rows, raw_coef_matrix, raw_cols)
+        raw_root_obs = root_obs.get('raw_root_obs', None)
+        raw_non_root_obs = root_obs.get('raw_non_root_obs', None)
+        featnames = root_obs.get('feat_names', None)
+    return sample_state, sample_cands, sample_action, cand_scores, (raw_root_obs, raw_non_root_obs, featnames)
 
 
 class HybridDataset(torch.utils.data.Dataset):
