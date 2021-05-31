@@ -45,7 +45,7 @@ class VanillaFullstrongBranchingDataCollector(scip.Branchrule):
             candidate_vars, *_ = self.model.getPseudoBranchCands()
             candidate_mask = [var.getCol().getLPPos() for var in candidate_vars]
 
-            state = utilities.extract_state(self.model)
+            state = utilities.extract_state(self.model, self.state_buffer)
             state_khalil = utilities.extract_khalil_variable_features(self.model, candidate_vars, self.khalil_root_buffer)
 
             result = self.model.executeBranchRule('vanillafullstrong', allowaddcons)
@@ -363,24 +363,53 @@ if __name__ == "__main__":
         type=utilities.valid_seed,
         default=0,
     )
-
     parser.add_argument(
         '-j', '--njobs',
         help='Number of parallel jobs.',
         type=int,
         default=1,
     )
+    parser.add_argument(
+        '--basedir',
+        help="path of the folder where data will be stored",
+        type=str,
+        default="data/samples"
+    )
+    parser.add_argument(
+        '--train_size',
+        help="number of observations in the training dataset",
+        type=int,
+        default=150000
+    )
+    parser.add_argument(
+        '--valid_size',
+        help="number of observations in the validation dataset",
+        type=int,
+        default=30000
+    )
+    parser.add_argument(
+        '--test_size',
+        help="number of observations in the test dataset",
+        type=int,
+        default=30000
+    )
+    parser.add_argument(
+        '--mediumvalid_size',
+        help="number of observations in the validation dataset for medium sized instances (used for indset problems)",
+        type=int,
+        default=2000
+    )
     args = parser.parse_args()
 
-    train_size = 150000
-    valid_size = 30000
-    test_size = 30000
+    train_size = args.train_size
+    valid_size = args.valid_size
+    test_size = args.test_size
     time_limit = 3600
     node_limit = 500
 
     node_record_prob = 1.0
 
-    basedir= "data/samples"
+    basedir= args.basedir
     # get instance filenames
     if args.problem == 'setcover':
         instances_train = glob.glob('data/instances/setcover/train_500r_1000c_0.05d/*.lp')
@@ -414,20 +443,23 @@ if __name__ == "__main__":
     print(f"{len(instances_valid)} validation instances for {valid_size} samples")
     print(f"{len(instances_test)} test instances for {test_size} samples")
 
-    rng = np.random.RandomState(args.seed + 1)
-    collect_samples(instances_train, out_dir +"/train", rng, train_size, args.njobs, time_limit)
-    print("Success: Train data collection")
+    if train_size:
+        rng = np.random.RandomState(args.seed + 1)
+        collect_samples(instances_train, out_dir +"/train", rng, train_size, args.njobs, time_limit)
+        print("Success: Train data collection")
 
-    rng = np.random.RandomState(args.seed + 1)
-    collect_samples(instances_valid, out_dir +"/valid", rng, valid_size, args.njobs, time_limit)
-    print("Success: Valid data collection")
+    if valid_size:
+        rng = np.random.RandomState(args.seed + 1)
+        collect_samples(instances_valid, out_dir +"/valid", rng, valid_size, args.njobs, time_limit)
+        print("Success: Valid data collection")
 
-    rng = np.random.RandomState(args.seed + 1)
-    collect_samples(instances_test, out_dir +"/test", rng, test_size, args.njobs, time_limit)
-    print("Success: Test data collection")
+    if test_size:
+        rng = np.random.RandomState(args.seed + 1)
+        collect_samples(instances_test, out_dir +"/test", rng, test_size, args.njobs, time_limit)
+        print("Success: Test data collection")
 
-    if args.problem == "indset":
-        mediumvalid_size = 2000
+    if args.problem == "indset" and args.mediumvalid_size:
+        mediumvalid_size = args.mediumvalid_size
         instances_mediumvalid = glob.glob('data/instances/indset/mediumvalid_1000_4/*.lp')
         out_dir = f'{basedir}/indset/1000_4'
 
